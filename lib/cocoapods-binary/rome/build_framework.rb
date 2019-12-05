@@ -184,6 +184,8 @@ module Pod
     #
     def self.build(sandbox_root_path, target, output_path, bitcode_enabled = false, custom_build_options=[], custom_build_options_simulator=[])
     
+      Pod::UI.puts "Pod.Prebuild.build 0"
+      
       return if target.nil?
       
       Pod::UI.puts "Build 1"

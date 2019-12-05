@@ -123,8 +123,18 @@ module Pod
 
                 output_path = sandbox.framework_folder_path_for_target_name(target.name)
                 output_path.mkpath unless output_path.exist?
+                                
+                UI.puts "\t" + "sandbox_path = " + sandbox_path
+                UI.puts "\t" + "target = " + target
+                UI.puts "\t" + "output_path = " + output_path
+                UI.puts "\t" + "bitcode_enabled = " + bitcode_enabled
+                UI.puts "\t" + "custom_build_options = " + Podfile::DSL.custom_build_options
+                UI.puts "\t" + "custom_build_options_simulator = " + Podfile::DSL.custom_build_options_simulator
+                
                 Pod::Prebuild.build(sandbox_path, target, output_path, bitcode_enabled,  Podfile::DSL.custom_build_options,  Podfile::DSL.custom_build_options_simulator)
 
+				UI.puts "\t" + "build finished?"
+				
                 # save the resource paths for later installing
                 if target.static_framework? and !target.resource_paths.empty?
                     framework_path = output_path + target.framework_name
