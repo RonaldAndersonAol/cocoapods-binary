@@ -24,6 +24,7 @@ def build_for_iosish_platform(sandbox,
   deployment_target = target.platform.deployment_target.to_s
   
   target_label = target.label # name with platform if it's used in multiple platforms
+  Pod::UI.puts "Ron Test"
   Pod::UI.puts "Prebuilding #{target_label}..."
   
   other_options = []
@@ -32,20 +33,28 @@ def build_for_iosish_platform(sandbox,
   # make less arch to iphone simulator for faster build
   custom_build_options_simulator += ['ARCHS=x86_64', 'ONLY_ACTIVE_ARCH=NO'] if simulator == 'iphonesimulator'
 
+  Pod::UI.puts "Test 1"
+
   is_succeed, _ = xcodebuild(sandbox, target_label, device, deployment_target, other_options + custom_build_options)
   exit 1 unless is_succeed
   is_succeed, _ = xcodebuild(sandbox, target_label, simulator, deployment_target, other_options + custom_build_options_simulator)
   exit 1 unless is_succeed
 
+  Pod::UI.puts "Test 2"
+  
   # paths
   target_name = target.name # equals target.label, like "AFNeworking-iOS" when AFNetworking is used in multiple platforms.
   module_name = target.product_module_name
   device_framework_path = "#{build_dir}/#{CONFIGURATION}-#{device}/#{target_name}/#{module_name}.framework"
   simulator_framework_path = "#{build_dir}/#{CONFIGURATION}-#{simulator}/#{target_name}/#{module_name}.framework"
 
+  Pod::UI.puts "Test 3"
+  
   device_binary = device_framework_path + "/#{module_name}"
   simulator_binary = simulator_framework_path + "/#{module_name}"
   return unless File.file?(device_binary) && File.file?(simulator_binary)
+  
+  Pod::UI.puts "Test 4"
   
   # the device_lib path is the final output file path
   # combine the binaries
@@ -54,6 +63,8 @@ def build_for_iosish_platform(sandbox,
   puts lipo_log unless File.exist?(tmp_lipoed_binary_path)
   FileUtils.mv tmp_lipoed_binary_path, device_binary, :force => true
   
+  Pod::UI.puts "Test 5"
+  
   # collect the swiftmodule file for various archs.
   device_swiftmodule_path = device_framework_path + "/Modules/#{module_name}.swiftmodule"
   simulator_swiftmodule_path = simulator_framework_path + "/Modules/#{module_name}.swiftmodule"
@@ -61,6 +72,8 @@ def build_for_iosish_platform(sandbox,
     FileUtils.cp_r simulator_swiftmodule_path + "/.", device_swiftmodule_path
   end
 
+  Pod::UI.puts "Test 6"
+  
   # combine the generated swift headers
   # (In xcode 10.2, the generated swift headers vary for each archs)
   # https://github.com/leavez/cocoapods-binary/issues/58
@@ -84,6 +97,8 @@ def build_for_iosish_platform(sandbox,
     File.write(device_generated_swift_header_path, combined_header_content.strip)
   end
 
+  Pod::UI.puts "Test 7"
+  
   # handle the dSYM files
   device_dsym = "#{device_framework_path}.dSYM"
   if File.exist? device_dsym
@@ -99,32 +114,35 @@ def build_for_iosish_platform(sandbox,
     FileUtils.mv device_dsym, output_path, :force => true
   end
 
+  Pod::UI.puts "Test 8"
+  
   # output
   output_path.mkpath unless output_path.exist?
   FileUtils.mv device_framework_path, output_path, :force => true
 
+  Pod::UI.puts "Test 9"
 end
 
 def xcodebuild(sandbox, target, sdk='macosx', deployment_target=nil, other_options=[])
 
-  puts "  xcodebuild()"
-  puts "    sandbox = " + sandbox
-  puts "    target = " + target
-  puts "    sdk = " + sdk
-  puts "    deployment_target = " + deployment_target
-  puts "    other_options = " + other_options
+  Pod::UI.puts "  xcodebuild()"
+  Pod::UI.puts "    sandbox = " + sandbox
+  Pod::UI.puts "    target = " + target
+  Pod::UI.puts "    sdk = " + sdk
+  Pod::UI.puts "    deployment_target = " + deployment_target
+  Pod::UI.puts "    other_options = " + other_options
 
   args = %W(-project #{sandbox.project_path.realdirpath} -scheme #{target} -configuration #{CONFIGURATION} -sdk #{sdk} -verbose -showBuildTimingSummary )
   platform = PLATFORMS[sdk]
   args += Fourflusher::SimControl.new.destination(:oldest, platform, deployment_target) unless platform.nil?
   args += other_options
   
-  puts "    starting scodebuild..."
+  Pod::UI.puts "    starting scodebuild..."
   
   log = `xcodebuild #{args.join(" ")} 2>&1`
   
-  puts "    xcodebuild returned with..."
-  puts log
+  Pod::UI.puts "    xcodebuild returned with..."
+  Pod::UI.puts log
   
   exit_code = $?.exitstatus  # Process::Status
   is_succeed = (exit_code == 0)
@@ -167,11 +185,15 @@ module Pod
     def self.build(sandbox_root_path, target, output_path, bitcode_enabled = false, custom_build_options=[], custom_build_options_simulator=[])
     
       return if target.nil?
+      
+      Pod::UI.puts "Build 1"
     
       sandbox_root = Pathname(sandbox_root_path)
       sandbox = Pod::Sandbox.new(sandbox_root)
       build_dir = self.build_dir(sandbox_root)
 
+      Pod::UI.puts "Build 2"
+      
       # -- build the framework
       case target.platform.name
       when :ios then build_for_iosish_platform(sandbox, build_dir, output_path, target, 'iphoneos', 'iphonesimulator', bitcode_enabled, custom_build_options, custom_build_options_simulator)
@@ -180,6 +202,8 @@ module Pod
       when :watchos then build_for_iosish_platform(sandbox, build_dir, output_path, target, 'watchos', 'watchsimulator', true, custom_build_options, custom_build_options_simulator)
       else raise "Unsupported platform for '#{target.name}': '#{target.platform.name}'" end
     
+      Pod::UI.puts "Build 3"
+      
       raise Pod::Informative, 'The build directory was not found in the expected location.' unless build_dir.directory?
 
       # # --- copy the vendored libraries and framework
