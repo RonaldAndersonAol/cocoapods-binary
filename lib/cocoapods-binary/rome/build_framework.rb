@@ -106,11 +106,26 @@ def build_for_iosish_platform(sandbox,
 end
 
 def xcodebuild(sandbox, target, sdk='macosx', deployment_target=nil, other_options=[])
+
+  puts "  xcodebuild()"
+  puts "    sandbox = " + sandbox
+  puts "    target = " + target
+  puts "    sdk = " + sdk
+  puts "    deployment_target = " + deployment_target
+  puts "    other_options = " + other_options
+
   args = %W(-project #{sandbox.project_path.realdirpath} -scheme #{target} -configuration #{CONFIGURATION} -sdk #{sdk} -verbose -showBuildTimingSummary )
   platform = PLATFORMS[sdk]
   args += Fourflusher::SimControl.new.destination(:oldest, platform, deployment_target) unless platform.nil?
   args += other_options
+  
+  puts "    starting scodebuild..."
+  
   log = `xcodebuild #{args.join(" ")} 2>&1`
+  
+  puts "    xcodebuild returned with..."
+  puts log
+  
   exit_code = $?.exitstatus  # Process::Status
   is_succeed = (exit_code == 0)
 
